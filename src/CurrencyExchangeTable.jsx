@@ -6,17 +6,28 @@ const CurrencyExchangeTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_KEY = 'ffe22c1b07c44ac1a13ad018ca212274'; // Replace with your actual API key
+  const API_KEY = 'ffe22c1b07c44ac1a13ad018ca212274'; // Pastikan untuk menyimpan API key dengan aman
   const currencies = ['CAD', 'IDR', 'JPY', 'CHF', 'EUR', 'GBP'];
 
   useEffect(() => {
     const fetchRates = async () => {
       try {
         const response = await axios.get(`https://api.currencyfreaks.com/latest?apikey=${API_KEY}&symbols=${currencies.join(',')}`);
-        setRates(response.data.rates);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to fetch currency rates');
+        if (response.data && response.data.rates) {
+          setRates(response.data.rates);
+        } else {
+          throw new Error('Invalid response format');
+        }
+      } catch (error) {
+        if (error.response) {
+          setError(`Error: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`);
+        } else if (error.request) {
+          setError('No response received from the server. Please check your internet connection.');
+        } else {
+          setError(`Error: ${error.message}`);
+        }
+        console.error('Error fetching currency rates:', error);
+      } finally {
         setLoading(false);
       }
     };
@@ -25,42 +36,46 @@ const CurrencyExchangeTable = () => {
   }, []);
 
   const calculateRate = (rate, type) => {
+    if (!rate) return '-';
     const baseRate = parseFloat(rate);
+    if (isNaN(baseRate)) return '-';
     if (type === 'buy') {
-      return (baseRate * 1.05).toFixed(4); // 5% markup for buying
+      return (baseRate * 1.05).toFixed(4); // Markup 5% untuk pembelian
     } else {
-      return (baseRate * 0.95).toFixed(4); // 5% markdown for selling
+      return (baseRate * 0.95).toFixed(4); // Markdown 5% untuk penjualan
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div className="text-center">Memuat...</div>;
+  if (error) return <div className="text-center text-red-500">{error}</div>;
 
   return (
-    <div className="p-4">
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-orange-500 text-white">
-            <th className="border border-gray-300 p-2">Currency</th>
-            <th className="border border-gray-300 p-2">We Buy</th>
-            <th className="border border-gray-300 p-2">Exchange Rate</th>
-            <th className="border border-gray-300 p-2">We Sell</th>
-          </tr>
-        </thead>
-        <tbody>
-          {currencies.map((currency) => (
-            <tr key={currency}>
-              <td className="border border-gray-300 p-2">{currency}</td>
-              <td className="border border-gray-300 p-2">{calculateRate(rates[currency], 'buy')}</td>
-              <td className="border border-gray-300 p-2">{parseFloat(rates[currency]).toFixed(4)}</td>
-              <td className="border border-gray-300 p-2">{calculateRate(rates[currency], 'sell')}</td>
+    <div className="flex justify-center items-center min-h-screen bg-orange-100">
+      <div className="bg-orange-500 text-white p-8 rounded-lg shadow-lg">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="text-left p-2 font-bold"></th>
+              <th className="text-left p-2 font-bold">We Buy</th>
+              <th className="text-left p-2 font-bold">Exchange Rate</th>
+              <th className="text-left p-2 font-bold">We Sell</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <p className="mt-4 text-sm text-gray-600">
-        Rates are based on 1 USD
-      </p>
+          </thead>
+          <tbody>
+            {currencies.map((currency) => (
+              <tr key={currency} className="border-t border-orange-400">
+                <td className="p-2">{currency}</td>
+                <td className="p-2">{calculateRate(rates[currency], 'buy')}</td>
+                <td className="p-2">{rates[currency] ? parseFloat(rates[currency]).toFixed(4) : '-'}</td>
+                <td className="p-2">{calculateRate(rates[currency], 'sell')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-4 text-sm text-center">
+          * Base currency is USD
+        </p>
+      </div>
     </div>
   );
 };
