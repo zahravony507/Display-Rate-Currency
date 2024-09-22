@@ -11,5 +11,7 @@ Currently, two official plugins are available:
 push an existing repository from the command line
 
 > git remote add origin https://github.com/zahravony507/Display-Rate-Currency-React-vite.git
+> 
 > git branch -M main
+> 
 > git push -u origin main
