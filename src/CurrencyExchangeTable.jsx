@@ -72,9 +72,6 @@ const CurrencyExchangeTable = () => {
             ))}
           </tbody>
         </table>
-        <p className="mt-4 text-sm text-center">
-          * Base currency is USD
-        </p>
       </div>
     </div>
   );
